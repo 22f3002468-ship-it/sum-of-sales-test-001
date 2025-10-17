@@ -1,29 +1,71 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sales Summary October</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Sales Summary October</h1>
-    <div id="total-sales"></div>
-  </div>
 
-  <script>
-    fetch('data.csv', { headers: { 'Content-Type': 'text/csv' } })
-      .then(response => response.text())
-      .then(data => {
-        let rows = data.split('\n');
-        let total = 0;
-        for (let i = 1; i < rows.length; i++) {
-          let columns = rows[i].split(',');
-          total += Number(columns[1]); // Assuming sales data is in the second column
-        }
-        document.querySelector('#total-sales').innerHTML = `Total Sales: $${total.toFixed(2)}`;
-      });
-  </script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
+<select id="currency-picker"></select>
+
+<select id="region-filter"></select>
+
+<table id="product-sales" class="table"></table>
+
+<p>Total Sales: <span id="total-sales"></span></p>
+
+<script>
+let totalSales = 0, rates;
+
+fetch('rates.json')
+  .then(response => response.json())
+  .then(data => {
+    rates = data;
+    Object.keys(data).forEach(key => {
+      const option = document.createElement("option");
+      option.text = key;
+      document.getElementById("currency-picker").add(option);
+    });
+  });
+
+fetch('sales.json')
+  .then(response => response.json())
+  .then(data => {
+    const table = document.getElementById("product-sales");
+    totalSales = data.reduce((total, entry) => {
+    const row = table.insertRow(-1);
+    const cell1 = row.insertCell(0);
+    cell1.innerHTML = entry.product;
+
+    const cell2 = row.insertCell(1);
+    cell2.innerHTML = entry.sales;
+    return total + entry.sales;
+    }, 0);
+
+    const regions = [...new Set(data.map(obj => obj.region))];
+    regions.forEach(region => {
+      const option = document.createElement("option");
+      option.text = region;
+      document.getElementById("region-filter").add(option);
+    });
+
+    updateTotalSales();
+  });
+
+function updateTotalSales() {
+  const currency = document.getElementById("currency-picker").value;
+  const convertedSales = totalSales * rates[currency];
+  document.getElementById("total-sales").innerHTML = convertedSales.toFixed(2);
+}
+
+document.getElementById("currency-picker").addEventListener("change", updateTotalSales);
+document.getElementById("region-filter").addEventListener("change", updateTotalSales);
+</script>
+
 </body>
 </html>
+```
+Note: This code assumes there is a `sales.json` file in the format `{ product: string, sales: number, region: string }[]` and a `rates.json` file in the format `{ [currency: string]: number }`. You would need these files and put their paths or URLs into fetch requests.

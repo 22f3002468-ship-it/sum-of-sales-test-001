@@ -1,4 +1,4 @@
-product,sales
-Pen,1000
-Pencil,500
-Tape,1300
+product,sales,region
+Pen,1000,North
+Pencil,500,South
+Tape,1300,East
